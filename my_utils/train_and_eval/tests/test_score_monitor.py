@@ -1,4 +1,4 @@
-from my_utils.train_and_eval._score_monitor import *
+from my_utils.train_and_eval.score_monitor import *
 
 def test_init():
     threshold = 4
@@ -46,6 +46,8 @@ def test_check_stop():
     monitor.update_best(45)
     assert False == monitor.check_stop()
     monitor.update_best(20)
+    assert True == monitor.check_stop()
+    monitor.update_best(30)
     assert True == monitor.check_stop()
 
     threshold = 3

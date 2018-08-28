@@ -34,7 +34,7 @@ class ScoreMonitor():
 
         self.best_model = None
 
-    def update_best(self, current_score, current_model):
+    def update_best(self, current_score, current_model=None):
         sign = 1 if self.go_up else -1
         if sign*self.best_score < sign*current_score:
             self.best_score = current_score

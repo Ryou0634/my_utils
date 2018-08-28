@@ -10,4 +10,4 @@ def test_loader():
     for i, (feature, target) in enumerate(loader):
         assert length[i] == len(feature)
         assert length[i] == len(target)
-    assert 7 == loader._i
+    assert 9 == loader._i

@@ -9,7 +9,7 @@ class Trainer():
     ----------
     model :
         A model to train.
-    train_loader : DataLoader
+    train_loader : my_utils.DataLoader
         DataLoader with training dataset.
     total_epoch : int
         The number of epoches elasped.
@@ -33,11 +33,11 @@ class Trainer():
             Something to control optimization. This is used in model.fit().
         max_epoch : int
             The maximum number of epoches.
-        evaluator : Evaluator
+        evaluator : my_utils.Evaluator
             Evaluator for test or validation dataset.
-        score_monitor : ScoreMonitor
+        score_monitor : my_utils.ScoreMonitor
             Used for early-stopping.
-        loss_monitor : ScoreMonitor
+        loss_monitor : my_utils.ScoreMonitor
             Used for early-stopping.
         show_log : bool
             If True, print log during training.

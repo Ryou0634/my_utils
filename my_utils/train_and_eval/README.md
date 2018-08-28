@@ -2,6 +2,29 @@
 
 Utilities to support training and evaluating ML models.
 
+## Description
+Models used with this utilities have to have the followin methods.
+
+```python3
+def forward(self, inputs):
+    '''
+    Perform forward computation.
+    '''
+    return output
+
+def fit(self, inputs, labels, optimizer):
+    '''
+    Caliculate loss and update parameters.
+    '''
+    return loss_item
+
+def predict(self, inputs):
+    '''
+    Outputs predicted labels (or values) from inputs.
+    '''
+    return predicted
+```
+
 ## Usage Example
 
 ```python3
