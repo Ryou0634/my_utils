@@ -34,13 +34,14 @@ class Dataset():
     '''
     Dataset which contains Examples.
     '''
-    def __init__(self, fields, filepath, tokenize=None, header=False):
+    def __init__(self, fields=None, filepath=None, tokenize=None, header=False):
         '''
         fields : str of List[str]
             This must be (sentence, or label) to work with Corpus class.
         '''
         self.data = []
-        self._init_read_file(fields, filepath, tokenize, header)
+        if (fields or filepath or tokenize) is not None:
+            self._init_read_file(fields, filepath, tokenize, header)
 
 
     def _init_read_file(self, fields, filepath, tokenize, header):
@@ -108,14 +109,10 @@ class Corpus():
     train, dev, test : Dataset
 
     +++ Available after running build_vocab() +++
-    freq : dict
-        The frequency list of corpus.
-    labed_freq : dict
-        The frequency list of labels.
-    vocab : Dictionary
-        Dictionary of vocbabulary.
-    labels : Dictionary
-        Dictionary of labels.
+    {field}_freq : dict
+        The frequency list of {field}.
+    {field} : Dictionary
+        Dictionary of {field}.
     '''
 
     def __init__(self, train, dev=None, test=None):
@@ -123,36 +120,43 @@ class Corpus():
         self.dev = dev
         self.test = test
 
-    def build_vocab(self, min_freq=0):
-        self.freq = {}
-        self.label_freq = {}
+    def build_vocab(self, field, attrs, typ, min_freq=0):
+        setattr(self, field+'_freq', {})
+        freq = getattr(self, field+'_freq')
         if self.train:
-            self._count_freq(self.train)
+            self._count_freq('train', freq, attrs, typ)
         if self.dev:
-            self._count_freq(self.dev)
+            self._count_freq('dev', freq, attrs, typ)
         if self.test:
-            self._count_freq(self.test)
-        words = [word for word, f in self.freq.items() if f > min_freq]
-        self.vocab = Dictionary(words)
-        self.vocab.add_word('<OOV>')
-        self.labels = Dictionary(list(self.label_freq.keys()))
+            self._count_freq('test', freq, attrs, typ)
+        words = [word for word, f in freq.items() if f > min_freq]
+        setattr(self, field, Dictionary(words))
+        if min_freq > 0:
+            getattr(self, field).add_word('<OOV>')
 
-    def get_numericalized(self, dataset='train'):
+    def get_numericalized(self, dataset, field, attr, typ):
+        dictionary = getattr(self, field)
         dataset = getattr(self, dataset)
         numericalized = []
         for ex in dataset.data:
-            num_ex = [[self.vocab(w) for w in sentence] for sentence in ex.get_sentences()]
-            if len(num_ex) == 1:
-                num_ex = num_ex[0]
-            numericalized.append((num_ex, self.labels(ex.label)))
+            data = getattr(ex, attr)
+            if typ == 'seq':
+                num = [dictionary(w) for w in data]
+            elif typ == 'label':
+                num = dictionary(data)
+            numericalized.append(num)
         return numericalized
 
-    def _count_freq(self, dataset):
+    def _count_freq(self, dataset, freq, attrs, typ):
+        dataset = getattr(self, dataset)
         for ex in dataset.data:
-            for sentence in ex.get_sentences():
-                for w in sentence:
-                    self.freq[w] = self.freq.get(w, 0) + 1
-            self.label_freq[ex.label] = self.label_freq.get(ex.label, 0) + 1
+            for attr in attrs:
+                data = getattr(ex, attr)
+                if typ == 'seq':
+                    for w in data:
+                        freq[w] = freq.get(w, 0) + 1
+                elif typ == 'label':
+                    freq[data] = freq.get(data, 0) + 1
         return
 
     def __repr__(self):
@@ -163,8 +167,11 @@ class Corpus():
             string += 'Dev: {}\n'.format(len(self.dev))
         if self.test:
             string += 'Test: {}\n'.format(len(self.test))
-        if hasattr(self, 'freq'):
-            string += 'The number of tokens: {}\n'.format(sum(self.freq.values()))
-            string += 'Vocabulary: {}\n'.format(len(self.vocab))
-            string += 'Labels: {}'.format(self.labels.itos)
+        for var in vars(self):
+            dictionary = getattr(self, var)
+            if isinstance(dictionary, Dictionary):
+                string += '======' + var + '======\n'
+                string += 'Vocabulary: {}\n'.format(len(dictionary))
+                freq = getattr(self, var+'_freq')
+                string += 'The number of tokens: {}\n'.format(sum(freq.values()))
         return string
