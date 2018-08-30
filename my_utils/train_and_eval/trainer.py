@@ -57,7 +57,7 @@ class Trainer():
             for inputs, labels in self.train_loader:
                 loss_sum += self.model.fit(inputs, labels, optimizer=optimizer)
             loss_sum = loss_sum/self.train_loader.n_batch
-            log = "epoch {:<3}\tloss: {:.4}\t".format(self.total_epoch, loss_sum)
+            log = "epoch {:<3}\tloss: {}\t".format(self.total_epoch, loss_sum)
             self.loss_record.append(loss_sum)
             self.total_epoch += 1
 
