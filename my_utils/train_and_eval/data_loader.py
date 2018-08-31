@@ -31,7 +31,7 @@ class DataLoader():
         self._i = 0
 
     def __len__(self):
-        return len(self.n_batch)
+        return self.n_batch
 
     def __iter__(self):
         self._i = 0
