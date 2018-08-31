@@ -89,6 +89,8 @@ class MultiSwithTrainer(Trainer):
         return loss, end_of_epoch
 
     def _train_epoch(self, optimizers):
+        for tl in self.train_loader:
+            iter(tl)
         losses = [0 for _ in range(self.n_models)]
         n_batch = 0
         while True:
