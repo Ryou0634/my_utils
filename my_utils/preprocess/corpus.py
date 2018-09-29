@@ -74,7 +74,8 @@ class Dataset():
         return string
 
 class Dictionary():
-    def __init__(self, words):
+    def __init__(self, words=None):
+        if words is None: words = [] # To aboid bug. Note that default parameter is instatiated when class module is read.
         self.itos = words
         self.stoi = dict([(word, i) for i, word in enumerate(words)])
 
