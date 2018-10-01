@@ -88,13 +88,15 @@ class Dictionary():
     def __len__(self):
         return len(self.itos)
 
-    def __call__(self, word_or_idx):
-        if type(word_or_idx) is int:
-            return self.itos[word_or_idx]
-        elif type(word_or_idx) is str:
-            return self.stoi[word_or_idx]
+    def __call__(self, word):
+        if type(word) is str:
+            return self.stoi[word]
         else:
-            raise Exception('Invalid Input. Input must be int or str')
+            raise Exception('Invalid Input. Input must be str')
+
+    def __getitem__(self, idx):
+        return self.itos[idx]
+
 
     def __repr__(self):
         string = 'Dictionary\n'

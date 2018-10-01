@@ -1,4 +1,5 @@
 import numpy as np
+from nltk import bleu_score
 from scipy.stats.mstats import gmean
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 import copy
@@ -25,9 +26,9 @@ class EvaluatorC(Evaluator):
     def evaluate(self, record=False):
         ys_pred = []
         ys_true = []
-        for inputs, y_true in self.data_loader:
+        for inputs, targets in self.data_loader:
             ys_pred.append(self.model.predict(inputs))
-            ys_true.append(y_true)
+            ys_true.append(targets)
         ys_pred = np.concatenate(ys_pred)
         ys_true = np.concatenate(ys_true)
 
@@ -40,6 +41,49 @@ class EvaluatorC(Evaluator):
 
         self.record.append(value)
         return value
+
+class EvaluatorSeq(Evaluator):
+    def __init__(self, model, data_loader, measure='accuracy'):
+        super().__init__(model, data_loader, measure)
+        self.go_up = True
+
+    def evaluate(self, record=False):
+        if self.measure == 'accuracy':
+            ys_pred = []
+            ys_true = []
+            for inputs, targets in self.data_loader:
+                predicted = self.model.predict(inputs)
+                predicted = self._pad_or_truncate(predicted, targets) #truncate the generated sequences
+                ys_pred.append(np.concatenate(predicted))
+                ys_true.append(np.concatenate(targets))
+            ys_pred = np.concatenate(ys_pred)
+            ys_true = np.concatenate(ys_true)
+            value = accuracy_score(ys_true, ys_pred)
+        elif self.measure == 'BLEU':
+            score = 0
+            for inputs, targets in self.data_loader:
+                predicted = self.model.predict(inputs)
+                score += self._get_BLEU_batch_sum(predicted, targets)
+            value = score/len(self.data_loader.dataset)
+        else:
+            raise ValueError("measure: ['accuray', 'BLEU']")
+        self.record.append(value)
+        return value
+
+    def _pad_or_truncate(self, predicted, targets):
+        procecced = []
+        for p_seq, t_seq, in zip(predicted, targets):
+            if len(p_seq) > len(t_seq):
+                procecced.append(p_seq[:len(t_seq)])
+            else:
+                procecced.append(p_seq + [-1 for _ in range(len(t_seq)-len(p_seq))])
+        return procecced
+
+    def _get_BLEU_batch_sum(self, predicted, targets):
+        score = 0
+        for cand, ref in zip(predicted, targets):
+            score += bleu_score.sentence_bleu([np.array(ref)], np.array(cand))
+        return score
 
 
 class EvaluatorLM(Evaluator):
