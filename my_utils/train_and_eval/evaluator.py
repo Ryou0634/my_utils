@@ -48,9 +48,9 @@ class EvaluatorSeq(Evaluator):
         self.go_up = True
 
     def evaluate(self, record=False):
+        ys_pred = []
+        ys_true = []
         if self.measure == 'accuracy':
-            ys_pred = []
-            ys_true = []
             for inputs, targets in self.data_loader:
                 predicted = self.model.predict(inputs)
                 predicted = self._pad_or_truncate(predicted, targets) #truncate the generated sequences
@@ -60,11 +60,10 @@ class EvaluatorSeq(Evaluator):
             ys_true = np.concatenate(ys_true)
             value = accuracy_score(ys_true, ys_pred)
         elif self.measure == 'BLEU':
-            score = 0
             for inputs, targets in self.data_loader:
-                predicted = self.model.predict(inputs)
-                score += self._get_BLEU_batch_sum(predicted, targets)
-            value = score/len(self.data_loader.dataset)
+                ys_pred += self.model.predict(inputs)
+                ys_true += [np.array(t)[np.newaxis, :] for t in targets]
+            value =bleu_score.corpus_bleu(ys_true, ys_pred)
         else:
             raise ValueError("measure: ['accuray', 'BLEU']")
         self.record.append(value)
@@ -78,12 +77,6 @@ class EvaluatorSeq(Evaluator):
             else:
                 procecced.append(p_seq + [-1 for _ in range(len(t_seq)-len(p_seq))])
         return procecced
-
-    def _get_BLEU_batch_sum(self, predicted, targets):
-        score = 0
-        for cand, ref in zip(predicted, targets):
-            score += bleu_score.sentence_bleu([np.array(ref)], np.array(cand))
-        return score
 
 
 class EvaluatorLM(Evaluator):
