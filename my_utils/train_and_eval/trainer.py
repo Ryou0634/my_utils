@@ -34,7 +34,7 @@ class Trainer():
         Parameters
         ----------
         optimizer :
-            Something to control optimization. This is used in model.fit().
+            Something to control optimization process. This is used in model.fit().
         max_epoch : int
             The maximum number of epoches.
         evaluator : my_utils.Evaluator
@@ -46,28 +46,39 @@ class Trainer():
         hook_func : function
             Do whatever you want to during each epoch by this function.
             (e.g. save the model, print some other information, etc.)
-
-        Returns
-        --------
-        best_model : a copy of model
-            The model with the highst dev score.
         """
 
-        best_model = None
         for epoch in range(max_epoch):
             log = self._train_epoch(optimizer)
-
-            if evaluator:
-                current_eval = evaluator.evaluate(record=True)
-                log += "{}: {:.4}\t".format(evaluator.measure, current_eval)
-            if show_log:
-                print(log)
-            if hook_func:
-                hook_func()
-            if score_monitor:
-                score_monitor.update_best(current_eval, self.model)
-                if score_monitor.check_stop(): break
+            self.misc(evaluator, score_monitor, hook_func, show_log, log)
         return
+
+    def train_iter(self, optimizer, n_iter=5000,
+                   evaluator=None, score_monitor=None, show_log=False, hook_func=None):
+        loss_sum = 0
+        count = 0
+        while True:
+            for inputs, labels in self.train_loader:
+                loss_sum += self.model.fit(inputs, labels, optimizer=optimizer)
+                count += 1
+                if count%n_iter == 0:
+                    loss_sum = loss_sum/n_iter
+                    log = "iter {:<3}\tloss: {}\t".format(count, loss_sum)
+                    loss_sum = 0
+                    self.misc(evaluator, score_monitor, hook_func, show_log, log)
+        return
+
+    def misc(self, evaluator, score_monitor, hook_func, show_log, log):
+        if evaluator:
+            current_eval = evaluator.evaluate(record=True)
+            log += "{}: {:.4}\t".format(evaluator.measure, current_eval)
+        if show_log:
+            print(log)
+        if score_monitor:
+            score_monitor.update_best(current_eval, self.model)
+        if hook_func:
+            hook_func()
+
 
 
 class MultiSwithTrainer(Trainer):
