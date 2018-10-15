@@ -55,6 +55,11 @@ class Dictionary():
         return self.itos[idx]
 
     def __repr__(self):
-        string = 'Dictionary\n'
-        string += 'Size: {}'.format(len(self))
-        return string
+        repr = 'Dictionary(\n' + \
+                    '\tsize: {}\n'.format(len(self))
+        n = 5
+        head = '\t' + str(dict(list(self.stoi.items())[:n]))
+        if len(self) > n:
+            head = head[:-1] + '...'
+        repr += head + '\n)'
+        return repr

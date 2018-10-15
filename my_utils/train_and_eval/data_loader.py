@@ -12,7 +12,7 @@ class DataLoader():
         List of tuples (feature, target)
     batch_size : int
         The batchsize.
-    n_batch : int
+    n_batches : int
         The number of mini-batches for one epoch.
     shuffle : bool
         If True, shuffle the dataset.
@@ -25,13 +25,13 @@ class DataLoader():
     def __init__(self, dataset, batch_size=1, trans_func=None, shuffle=True):
         self.dataset = dataset
         self.batch_size = batch_size
-        self.n_batch = len(dataset)//self.batch_size + int(bool(len(dataset)%self.batch_size))
+        self.n_batches = len(dataset)//self.batch_size + int(bool(len(dataset)%self.batch_size))
         self.shuffle = shuffle
         self.trans_func = trans_func
         self._i = 0
 
     def __len__(self):
-        return self.n_batch
+        return self.n_batches
 
     def __iter__(self):
         self._i = 0
@@ -48,6 +48,16 @@ class DataLoader():
             inputs, targets = self.trans_func(inputs, targets)
         self._i += self.batch_size
         return inputs, targets
+
+    def __repr__(self):
+        repr = 'DataLoader(\n' + \
+                    '\tdatasize: {}\n'.format(len(self.dataset)) + \
+                    '\tbatchsize: {}\n'.format(self.batch_size) + \
+                    '\tn_batches: {}\n'.format(self.n_batches) + \
+                    '\ttrans_func: {}\n'.format(self.trans_func.__class__.__name__) + \
+                    '\tshuffle: {}\n'.format(self.shuffle) + \
+                    '\tdevice: {}\n)'.format(self.trans_func.device)
+        return repr
 
 class MultiDataLoader():
     def __init__(self, loaders):

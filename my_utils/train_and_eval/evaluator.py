@@ -11,19 +11,28 @@ class Evaluator():
         self.model = model
         self.data_loader = data_loader
         self.measure = measure
-        self.record = []
 
-    def evaluate(self, record=False):
+    def evaluate(self):
         return
+
+class EvaluatorLoss(Evaluator):
+    def __init__(self, model, data_loader):
+        super().__init__(model, data_loader, measure='loss')
+
+    def evaluate(self):
+        loss_sum = 0
+        for inputs, targets in self.data_loader:
+            loss_sum += self.model.fit(inputs, targets, optimizer=None)
+        loss_sum = loss_sum/self.data_loader.n_batch
+        return loss_sum
 
 # Evaluator for classifier
 class EvaluatorC(Evaluator):
     def __init__(self, model, data_loader, measure='accuracy'):
         super().__init__(model, data_loader, measure)
-        self.go_up = True
 
     # override
-    def evaluate(self, record=False):
+    def evaluate(self):
         ys_pred = []
         ys_true = []
         for inputs, targets in self.data_loader:
@@ -39,15 +48,14 @@ class EvaluatorC(Evaluator):
         else:
             raise ValueError('measure: [accuray, F, macroF, microF]')
 
-        self.record.append(value)
         return value
 
+# Evaluator for sequence generation
 class EvaluatorSeq(Evaluator):
     def __init__(self, model, data_loader, measure='accuracy'):
         super().__init__(model, data_loader, measure)
-        self.go_up = True
 
-    def evaluate(self, record=False):
+    def evaluate(self):
         ys_pred = []
         ys_true = []
         if self.measure == 'accuracy':
@@ -66,7 +74,6 @@ class EvaluatorSeq(Evaluator):
             value =bleu_score.corpus_bleu(ys_true, ys_pred)
         else:
             raise ValueError("measure: ['accuray', 'BLEU']")
-        self.record.append(value)
         return value
 
     def _pad_or_truncate(self, predicted, targets):
@@ -82,26 +89,23 @@ class EvaluatorSeq(Evaluator):
 class EvaluatorLM(Evaluator):
     def __init__(self, model, data_loader, measure='perplexity'):
         super().__init__(model, data_loader, measure)
-        self.go_up = False
 
-    def evaluate(self, record=False):
+    def evaluate(self):
         prob = np.array([])
 
-        for inputs, labels in self.data_loader:
+        for inputs, targets in self.data_loader:
             predicted = self.model.predict(inputs)
 
             if type(predicted) is list:
                 # if predicted == [[label, label, ...], [...], ...]
-                #    labels = [[label, label, ...], [...], ...]
+                #    targets = [[label, label, ...], [...], ...]
                 predicted = np.concatenate(predicted)
-                labels = np.concatenate(labels)
-            predicted = predicted[[range(len(labels)), labels]]
+                targets = np.concatenate(targets)
+            predicted = predicted[[range(len(targets)), targets]]
             if type(predicted) is not np.ndarray:
                 predicted = predicted.cpu().numpy()
             prob = np.concatenate((prob, predicted))
         perplexity = gmean(1/prob)
-        if record:
-            self.record.append(perplexity)
         return perplexity
 
 
@@ -112,12 +116,10 @@ class EvaluatorTE(Evaluator):
         """
         super(EvaluatorTE, self).__init__(model, testdata, measure)
         self.predict_rel = predict_rel
-        if self.measure == 'meanrank':
-            self.go_up = False
-            self.best_score = np.inf
+
 
     # override
-    def evaluate(self, record=False):
+    def evaluate(self):
         if self.measure == 'accuracy': func = self.hits_at_best
         elif self.measure == 'hits@10': func = self.hits_at_ten
         elif self.measure == 'meanrank': func = self.get_rank
@@ -125,8 +127,6 @@ class EvaluatorTE(Evaluator):
             raise ValueError('measure: [accuray, hits@10, meanrank]')
 
         value = np.array([func(triple) for triple in self.testdata]).mean()
-        if record:
-            self.record.append(value)
         return value
 
     def get_rank(self, triple):

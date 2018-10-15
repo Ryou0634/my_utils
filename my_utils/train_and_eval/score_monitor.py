@@ -8,7 +8,6 @@ class ScoreMonitor():
 
     Attributes
     ----------
-
     threshold : int
         If score doesn't get better for 'threshold' times,
         the instance will send a stop signal.
@@ -24,11 +23,10 @@ class ScoreMonitor():
         The best model so far.
     '''
 
-    def __init__(self, threshold=1, go_up=True, save_path=None):
+    def __init__(self, threshold=1, go_up=True):
 
         self.threshold = threshold
         self.go_up = go_up
-        self.save_path = save_path
         self.stop_count = 0
         self.best_score = -np.inf if go_up else np.inf
 
@@ -37,16 +35,10 @@ class ScoreMonitor():
         if sign*self.best_score < sign*current_score:
             self.best_score = current_score
             self.stop_count = 0
-            if self.save_path:
-                self._save_model(current_model)
             return True
         else:
             self.stop_count += 1
             return False
-
-    def _save_model(self, model):
-        with open(self.save_path, mode='wb') as f:
-            pickle.dump(model, f)
 
     def check_stop(self):
         return self.stop_count >= self.threshold

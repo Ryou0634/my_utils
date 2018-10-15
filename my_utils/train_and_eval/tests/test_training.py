@@ -26,7 +26,7 @@ def test_training():
     assert monitor.best_model is None
     trainer = Trainer(model, train_loader)
     evaluator = EvaluatorC(model, test_loader)
-    trainer.train(optimizer, max_epoch=10, evaluator=evaluator, score_monitor=monitor)
+    trainer.train_epoch(optimizer, max_epoch=10, evaluator=evaluator, score_monitor=monitor)
     assert 0.5 == evaluator.evaluate()
     assert 1 + threshold == trainer.total_epoch
     assert monitor.best_model is not None

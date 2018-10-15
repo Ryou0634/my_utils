@@ -53,7 +53,7 @@ class CV_Neural(CrossValidator):
 
     def _train_and_evaluate(self, model, evaluator, optimizer, show_log):
         trainer = Trainer(model)
-        trainer.train(self.train_loader, optimizer, max_epoch=100, evaluator=evaluator, show_log=show_log)
+        trainer.train_epoch(self.train_loader, optimizer, max_epoch=100, evaluator=evaluator, show_log=show_log)
         return evaluator.best_score
 
 class CV_Simple(CrossValidator):
