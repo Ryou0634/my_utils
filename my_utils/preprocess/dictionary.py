@@ -11,23 +11,35 @@ class Dictionary():
     itos : List
         A list concains words. The order corresponds to stoi.
     '''
-    def __init__(self, words=None, unknown=None):
+    def __init__(self, init_words=None, unknown=None, filepath=None):
         '''
         Parameters
         ----------
-        words : List[str]
+        init_words : List[str]
             If specified, Dictionary will be initialized with the words in the list.
         unknown : str
-            If specidied, dictionary will be able to handle unknown words.
+            If specified, dictionary will be able to handle unknown words.
             The string will be used for unknown words. We recommend using '<UNK>'.
+        filepath : str
+            If specified, dictionary will read this file.
+            The file has "{word}" in each line.
         '''
-        if words is None: words = [] # To aboid bug. Note that default parameter is instatiated when class module is read.
+        init_vocab = []
 
+        if filepath:
+            init_vocab += self._read_file(filepath)
+        if init_words:
+            init_vocab += init_words
         self.unk = unknown
         if unknown is not None:
-            words.append(self.unk)
-        self.itos = words
-        self.stoi = dict([(word, i) for i, word in enumerate(words)])
+            init_vocab += [self.unk]
+        self.itos = init_vocab
+        self.stoi = dict([(word, i) for i, word in enumerate(init_vocab)])
+
+    def _read_file(self, path):
+        with open(path, 'r') as f:
+            init_vocab = f.read().split('\n')
+        return init_vocab
 
     def add_word(self, word):
         if word not in self.itos:
@@ -38,6 +50,10 @@ class Dictionary():
     def add_words(self, words):
         for word in words:
             self.add_word(word)
+
+    def save(self, path):
+        with open(path, 'w') as f:
+            f.write('\n'.join(self.itos))
 
     def __len__(self):
         return len(self.itos)

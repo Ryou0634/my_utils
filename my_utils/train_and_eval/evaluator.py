@@ -23,7 +23,7 @@ class EvaluatorLoss(Evaluator):
         loss_sum = 0
         for inputs, targets in self.data_loader:
             loss_sum += self.model.fit(inputs, targets, optimizer=None)
-        loss_sum = loss_sum/self.data_loader.n_batch
+        loss_sum = loss_sum/self.data_loader.n_batches
         return loss_sum
 
 # Evaluator for classifier
