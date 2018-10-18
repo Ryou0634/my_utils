@@ -4,9 +4,19 @@ from scipy.stats.mstats import gmean
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 import copy
 
-# base class
 class Evaluator():
-    # the prototype of Evaluator
+    """
+    Base class for Evaluators
+
+    Args
+    ----
+    model :
+        A model to be evaluated.
+    data_loader : my_utils.DataLoader
+        A data-loader which contains test/dev dataset.
+    measure : str
+        Specify how to evaluate the dataset.
+    """
     def __init__(self, model, data_loader, measure):
         self.model = model
         self.data_loader = data_loader
@@ -26,8 +36,9 @@ class EvaluatorLoss(Evaluator):
         loss_sum = loss_sum/self.data_loader.n_batches
         return loss_sum
 
-# Evaluator for classifier
+
 class EvaluatorC(Evaluator):
+    """Evaluator for classification"""
     def __init__(self, model, data_loader, measure='accuracy'):
         super().__init__(model, data_loader, measure)
 
@@ -61,7 +72,7 @@ class EvaluatorSeq(Evaluator):
         if self.measure == 'accuracy':
             for inputs, targets in self.data_loader:
                 predicted = self.model.predict(inputs)
-                predicted = self._pad_or_truncate(predicted, targets) #truncate the generated sequences
+                predicted, targets = self._pad(predicted, targets) # when over- or under-generate
                 ys_pred.append(np.concatenate(predicted))
                 ys_true.append(np.concatenate(targets))
             ys_pred = np.concatenate(ys_pred)
@@ -71,20 +82,19 @@ class EvaluatorSeq(Evaluator):
             for inputs, targets in self.data_loader:
                 ys_pred += self.model.predict(inputs)
                 ys_true += [np.array(t)[np.newaxis, :] for t in targets]
-            value =bleu_score.corpus_bleu(ys_true, ys_pred)
+            value = bleu_score.corpus_bleu(ys_true, ys_pred)
         else:
             raise ValueError("measure: ['accuray', 'BLEU']")
         return value
 
-    def _pad_or_truncate(self, predicted, targets):
-        procecced = []
-        for p_seq, t_seq, in zip(predicted, targets):
-            if len(p_seq) > len(t_seq):
-                procecced.append(p_seq[:len(t_seq)])
+    def _pad(self, predicted, targets):
+        for i in range(len(predicted)):
+            offset = len(predicted[i])-len(targets[i])
+            if offset > 0:
+                targets[i] = np.concatenate((targets[i], [-1 for _ in range(offset)]))
             else:
-                procecced.append(p_seq + [-1 for _ in range(len(t_seq)-len(p_seq))])
-        return procecced
-
+                predicted[i] = np.concatenate((predicted[i], [-1 for _ in range(-offset)]))
+        return predicted, targets
 
 class EvaluatorLM(Evaluator):
     def __init__(self, model, data_loader, measure='perplexity'):

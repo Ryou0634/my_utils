@@ -72,7 +72,8 @@ class Dictionary():
 
     def __repr__(self):
         repr = 'Dictionary(\n' + \
-                    '\tsize: {}\n'.format(len(self))
+                    '\tsize: {}\n'.format(len(self))  + \
+                    '\tunkown: {}\n'.format(self.unk)
         n = 5
         head = '\t' + str(dict(list(self.stoi.items())[:n]))
         if len(self) > n:
