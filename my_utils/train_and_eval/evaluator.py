@@ -26,7 +26,14 @@ class Evaluator():
         return
 
 class EvaluatorLoss(Evaluator):
-    def __init__(self, model, data_loader):
+    """
+    Evaluator for loss
+
+    measure
+    -------
+    'loss'
+    """
+    def __init__(self, model, data_loader, measure='loss'):
         super().__init__(model, data_loader, measure='loss')
 
     def evaluate(self):
@@ -38,7 +45,16 @@ class EvaluatorLoss(Evaluator):
 
 
 class EvaluatorC(Evaluator):
-    """Evaluator for classification"""
+    """
+    Evaluator for sequence generation
+
+    measure
+    -------
+    'accuracy': Accuracy.
+    'F': F1-score
+    'macroF': Compute the F1-score independently for each class and then take the average.
+    'microF': Aggregate the contributions of all classes to compute the average F1-score.
+    """
     def __init__(self, model, data_loader, measure='accuracy'):
         super().__init__(model, data_loader, measure)
 
@@ -62,7 +78,19 @@ class EvaluatorC(Evaluator):
         return value
 
 # Evaluator for sequence generation
+from my_utils.misc.bleu import sentence_bleu
 class EvaluatorSeq(Evaluator):
+    """
+    Evaluator for sequence generation
+
+    measure
+    -------
+    'accuracy': If the lengths of a target and a generation are different,
+                pad them with -1 and evaluate accuracy.
+    'BLEU': Compute the corpus-bleu score.
+    'sent_BLEU': Compute the sentence-bleu with plus-1 smoothing for each sequence
+                 and then take the average.
+    """
     def __init__(self, model, data_loader, measure='accuracy'):
         super().__init__(model, data_loader, measure)
 
@@ -83,8 +111,14 @@ class EvaluatorSeq(Evaluator):
                 ys_pred += self.model.predict(inputs)
                 ys_true += [np.array(t)[np.newaxis, :] for t in targets]
             value = bleu_score.corpus_bleu(ys_true, ys_pred)
+        elif self.measure == 'sent_BLEU':
+            sent_bleues = []
+            for inputs, targets in self.data_loader:
+                predicted = self.model.predict(inputs)
+            sent_bleues += [sentence_bleu(cand, tgt) for cand, tgt in zip(inputs, predicted)]
+            value = sum(sent_bleues)/len(sent_bleues)
         else:
-            raise ValueError("measure: ['accuray', 'BLEU']")
+            raise ValueError("measure: ['accuray', 'BLEU', 'sent_BLEU']")
         return value
 
     def _pad(self, predicted, targets):

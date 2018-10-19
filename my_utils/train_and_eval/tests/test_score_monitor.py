@@ -1,9 +1,9 @@
 from my_utils.train_and_eval.score_monitor import *
 
 def test_init():
-    threshold = 4
-    monitor = ScoreMonitor(threshold)
-    assert threshold == monitor.threshold
+    tenacity = 4
+    monitor = ScoreMonitor(tenacity)
+    assert tenacity == monitor.tenacity
     assert True == monitor.go_up
     monitor = ScoreMonitor(go_up=False)
     assert False == monitor.go_up
@@ -42,7 +42,7 @@ def test_update_best():
 def test_check_stop():
     monitor = ScoreMonitor()
     assert True == monitor.go_up
-    assert 1 == monitor.threshold
+    assert 1 == monitor.tenacity
     monitor.update_best(45)
     assert False == monitor.check_stop()
     monitor.update_best(20)
@@ -50,11 +50,11 @@ def test_check_stop():
     monitor.update_best(30)
     assert True == monitor.check_stop()
 
-    threshold = 3
+    tenacity = 3
     go_up = False
-    monitor = ScoreMonitor(threshold=threshold, go_up=go_up)
+    monitor = ScoreMonitor(tenacity=tenacity, go_up=go_up)
     assert go_up == monitor.go_up
-    assert threshold == monitor.threshold
+    assert tenacity == monitor.tenacity
     monitor.update_best(45)
     monitor.update_best(20)
     monitor.update_best(30)

@@ -8,8 +8,8 @@ class ScoreMonitor():
 
     Attributes
     ----------
-    threshold : int
-        If score doesn't get better for 'threshold' times,
+    tenacity : int
+        If score doesn't get better for 'tenacity' times,
         the instance will send a stop signal.
     go_up : boolean
         If True, we expect score goes up (e.g. accuracy, F1-score) and
@@ -23,9 +23,9 @@ class ScoreMonitor():
         The best model so far.
     '''
 
-    def __init__(self, threshold=1, go_up=True):
+    def __init__(self, tenacity=1, go_up=True):
 
-        self.threshold = threshold
+        self.tenacity = tenacity
         self.go_up = go_up
         self.stop_count = 0
         self.best_score = -np.inf if go_up else np.inf
@@ -41,4 +41,4 @@ class ScoreMonitor():
             return False
 
     def check_stop(self):
-        return self.stop_count >= self.threshold
+        return self.stop_count >= self.tenacity

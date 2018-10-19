@@ -14,7 +14,7 @@ train = [(0, 0) for _ in range(10)]
 test = [(0, 0) for _ in range(3)] + [(0 , 1) for _ in range(3)]
 
 def test_training():
-    threshold = 3
+    tenacity = 3
 
     train_loader = DataLoader(train, batch_size=2)
     test_loader = DataLoader(test, batch_size=2)
@@ -22,11 +22,9 @@ def test_training():
     model = PseudoModel()
 
     optimizer = None
-    monitor = ScoreMonitor(threshold = threshold)
-    assert monitor.best_model is None
+    monitor = ScoreMonitor(tenacity = tenacity)
     trainer = Trainer(model, train_loader)
     evaluator = EvaluatorC(model, test_loader)
     trainer.train_epoch(optimizer, max_epoch=10, evaluator=evaluator, score_monitor=monitor)
     assert 0.5 == evaluator.evaluate()
-    assert 1 + threshold == trainer.total_epoch
-    assert monitor.best_model is not None
+    assert 1 + tenacity == trainer.total_epoch
