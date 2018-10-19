@@ -115,7 +115,7 @@ class EvaluatorSeq(Evaluator):
             sent_bleues = []
             for inputs, targets in self.data_loader:
                 predicted = self.model.predict(inputs)
-            sent_bleues += [sentence_bleu(cand, tgt) for cand, tgt in zip(inputs, predicted)]
+                sent_bleues += [sentence_bleu(cand, np.array(tgt)) for cand, tgt in zip(predicted, targets)]
             value = sum(sent_bleues)/len(sent_bleues)
         else:
             raise ValueError("measure: ['accuray', 'BLEU', 'sent_BLEU']")
