@@ -20,6 +20,7 @@ class Evaluator():
     def __init__(self, model, data_loader, measure):
         self.model = model
         self.data_loader = data_loader
+        self.data_loader.train = False
         self.measure = measure
 
     def evaluate(self):
@@ -108,14 +109,14 @@ class EvaluatorSeq(Evaluator):
             value = accuracy_score(ys_true, ys_pred)
         elif self.measure == 'BLEU':
             for inputs, targets in self.data_loader:
-                ys_pred += self.model.predict(inputs)
+                ys_pred += [np.array(p) for p in self.model.predict(inputs)]
                 ys_true += [np.array(t)[np.newaxis, :] for t in targets]
             value = bleu_score.corpus_bleu(ys_true, ys_pred)
         elif self.measure == 'sent_BLEU':
             sent_bleues = []
             for inputs, targets in self.data_loader:
                 predicted = self.model.predict(inputs)
-                sent_bleues += [sentence_bleu(cand, np.array(tgt)) for cand, tgt in zip(predicted, targets)]
+                sent_bleues += [sentence_bleu(np.array(cand), np.array(tgt)) for cand, tgt in zip(predicted, targets)]
             value = sum(sent_bleues)/len(sent_bleues)
         else:
             raise ValueError("measure: ['accuray', 'BLEU', 'sent_BLEU']")

@@ -15,7 +15,6 @@ class Trainer():
     def __init__(self, model, train_loader):
         self.model = model
         self.train_loader = train_loader
-        self.train_loader.train = True
         self.total_steps = 0
 
 
@@ -32,16 +31,17 @@ class Trainer():
         """Train the model for the specified number of steps instead of epochs."""
         loss_sum = 0
         stop_flag = False
+        self.train_loader.train = True
 
-        for inputs, labels in self.train_loader:
+        for i, (inputs, labels) in enumerate(self.train_loader, 1):
             loss_sum += self.model.fit(inputs, labels, optimizer=optimizer)
             self.total_steps += 1
-            if self.total_steps%checkpoint_steps == 0:
+            if i%checkpoint_steps == 0:
                 loss_sum /= checkpoint_steps
-                logger.info("steps [{}/{}]\tloss: {}\t".format(self.total_steps, max_steps, loss_sum))
+                logger.info("steps [{}/{}]\tloss: {}\t".format(i, max_steps, loss_sum))
                 loss_sum = 0
                 stop_flag = self._evaluate(evaluator, score_monitor, model_saver)
-            if stop_flag or self.total_steps >= max_steps: return stop_flag
+            if stop_flag or i >= max_steps: return stop_flag
 
     def _evaluate(self, evaluator, score_monitor, model_saver):
         if evaluator:
@@ -58,3 +58,4 @@ class Trainer():
             if stop_flag:
                 logger.info('Dev score saturated.')
             return stop_flag
+        return False
