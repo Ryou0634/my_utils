@@ -1,6 +1,9 @@
 import numpy as np
 import random
 
+def raw_data(batch):
+    return zip(*batch)
+
 class DataLoader():
     '''
     Data loader for mini-batch stochastic gradient decent models.
@@ -14,39 +17,43 @@ class DataLoader():
         The batchsize.
     n_batches : int
         The number of mini-batches for one epoch.
-    shuffle : bool
-        If True, shuffle the dataset.
+    train : bool
+        If True, shuffle the dataset and create infinite loop.
     trans_func :
         Function to process data before feeding them into a model.
     _i : int
         Just a counter.
     '''
 
-    def __init__(self, dataset, batch_size=1, trans_func=None, shuffle=True):
+    def __init__(self, dataset, trans_func=raw_data, batch_size=1, train=False):
         self.dataset = dataset
         self.batch_size = batch_size
         self.n_batches = len(dataset)//self.batch_size + int(bool(len(dataset)%self.batch_size))
-        self.shuffle = shuffle
+        self.train = train
         self.trans_func = trans_func
         self._i = 0
+        self.n_epochs = 0
 
     def __len__(self):
         return self.n_batches
 
     def __iter__(self):
         self._i = 0
-        if self.shuffle:
+        if self.train:
             random.shuffle(self.dataset)
         return self
 
     def __next__(self):
         if self._i >= len(self.dataset):
-            raise StopIteration()
+            if self.train:
+                iter(self)
+            else:
+                raise StopIteration()
         batch = self.dataset[self._i:self._i+self.batch_size]
-        inputs, targets = zip(*batch)
-        if self.trans_func:
-            inputs, targets = self.trans_func(inputs, targets)
+        inputs, targets = self.trans_func(batch)
         self._i += self.batch_size
+        if self._i >= len(self.dataset):
+            self.n_epochs += 1
         return inputs, targets
 
     def __repr__(self):
@@ -55,7 +62,6 @@ class DataLoader():
                     '\tbatchsize: {}\n'.format(self.batch_size) + \
                     '\tn_batches: {}\n'.format(self.n_batches) + \
                     '\ttrans_func: {}\n'.format(self.trans_func.__class__.__name__) + \
-                    '\tshuffle: {}\n'.format(self.shuffle) + \
                     '\tdevice: {}\n)'.format(self.trans_func.device)
         return repr
 

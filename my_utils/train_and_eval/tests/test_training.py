@@ -27,4 +27,4 @@ def test_training():
     evaluator = EvaluatorC(model, test_loader)
     trainer.train_epoch(optimizer, max_epoch=10, evaluator=evaluator, score_monitor=monitor)
     assert 0.5 == evaluator.evaluate()
-    assert 1 + tenacity == trainer.total_epoch
+    assert 1 + tenacity == train_loader.n_epochs
